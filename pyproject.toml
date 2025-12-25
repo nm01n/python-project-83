@@ -1,0 +1,25 @@
+[project]
+name = "hexlet-code"
+version = "0.1.0"
+description = "Page Analyzer"
+authors = [
+    { name = "Olga", email = "famtaki@proton.me" }
+]
+dependencies = [
+    "flask>=3.0.0",
+    "gunicorn>=21.2.0",
+    "python-dotenv>=1.0.0",
+]
+requires-python = ">=3.10"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["page_analyzer"]
+
+[dependency-groups]
+dev = [
+    "flake8>=7.0.0",
+]
