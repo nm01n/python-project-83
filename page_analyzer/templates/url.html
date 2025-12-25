@@ -24,5 +24,37 @@
             </tbody>
         </table>
     </div>
+
+    <h2 class="mt-5">Проверки</h2>
+    <form method="post" action="{{ url_for('add_check', id=url.id) }}">
+        <button type="submit" class="btn btn-primary">Запустить проверку</button>
+    </form>
+
+    <div class="table-responsive mt-3">
+        <table class="table table-striped table-hover" data-test="checks">
+            <thead>
+                <tr>
+                    <th scope="col">ID</th>
+                    <th scope="col">Код ответа</th>
+                    <th scope="col">h1</th>
+                    <th scope="col">title</th>
+                    <th scope="col">description</th>
+                    <th scope="col">Дата создания</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for check in checks %}
+                <tr>
+                    <td>{{ check.id }}</td>
+                    <td>{{ check.status_code if check.status_code else '' }}</td>
+                    <td>{{ check.h1 if check.h1 else '' }}</td>
+                    <td>{{ check.title if check.title else '' }}</td>
+                    <td>{{ check.description if check.description else '' }}</td>
+                    <td>{{ check.created_at.strftime('%Y-%m-%d') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

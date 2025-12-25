@@ -78,10 +78,23 @@ def add_url():
 def urls():
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
-    cur.execute('SELECT * FROM urls ORDER BY created_at DESC')
+    
+    # Получаем все URLs с датой последней проверки
+    cur.execute('''
+        SELECT 
+            urls.id,
+            urls.name,
+            urls.created_at,
+            MAX(url_checks.created_at) as last_check
+        FROM urls
+        LEFT JOIN url_checks ON urls.id = url_checks.url_id
+        GROUP BY urls.id, urls.name, urls.created_at
+        ORDER BY urls.created_at DESC
+    ''')
     urls_list = cur.fetchall()
     cur.close()
     conn.close()
+    
     return render_template('urls.html', urls=urls_list)
 
 
@@ -89,13 +102,56 @@ def urls():
 def show_url(id):
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    # Получаем информацию о URL
     cur.execute('SELECT * FROM urls WHERE id = %s', (id,))
     url = cur.fetchone()
-    cur.close()
-    conn.close()
     
     if url is None:
+        cur.close()
+        conn.close()
         flash('URL не найден', 'danger')
         return redirect(url_for('index'))
     
-    return render_template('url.html', url=url)
+    # Получаем все проверки для этого URL
+    cur.execute(
+        'SELECT * FROM url_checks WHERE url_id = %s ORDER BY created_at DESC',
+        (id,)
+    )
+    checks = cur.fetchall()
+    
+    cur.close()
+    conn.close()
+    
+    return render_template('url.html', url=url, checks=checks)
+
+
+@app.route('/urls/<int:id>/checks', methods=['POST'])
+def add_check(id):
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    # Проверяем существование URL
+    cur.execute('SELECT * FROM urls WHERE id = %s', (id,))
+    url = cur.fetchone()
+    
+    if url is None:
+        cur.close()
+        conn.close()
+        flash('URL не найден', 'danger')
+        return redirect(url_for('index'))
+    
+    # Создаем новую проверку (пока только с базовыми полями)
+    created_at = datetime.now()
+    cur.execute(
+        '''INSERT INTO url_checks 
+           (url_id, created_at) 
+           VALUES (%s, %s)''',
+        (id, created_at)
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    flash('Страница успешно проверена', 'success')
+    return redirect(url_for('show_url', id=id))

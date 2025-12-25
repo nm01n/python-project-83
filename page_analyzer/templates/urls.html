@@ -12,6 +12,7 @@
                 <tr>
                     <th scope="col">ID</th>
                     <th scope="col">Имя</th>
+                    <th scope="col">Последняя проверка</th>
                     <th scope="col">Дата создания</th>
                 </tr>
             </thead>
@@ -21,6 +22,11 @@
                     <td>{{ url.id }}</td>
                     <td>
                         <a href="{{ url_for('show_url', id=url.id) }}">{{ url.name }}</a>
+                    </td>
+                    <td>
+                        {% if url.last_check %}
+                            {{ url.last_check.strftime('%Y-%m-%d') }}
+                        {% endif %}
                     </td>
                     <td>{{ url.created_at.strftime('%Y-%m-%d') }}</td>
                 </tr>
