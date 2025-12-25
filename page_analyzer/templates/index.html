@@ -10,12 +10,13 @@
         <div class="col-12 col-md-10 col-lg-8 mx-auto border rounded-3 bg-light p-5">
             <h2 class="mb-3">Бесплатно проверьте SEO-пригодность вашего сайта</h2>
             
-            <form method="post" action="/" class="row g-3" required>
+            <form method="post" action="{{ url_for('add_url') }}" class="row g-3" required>
                 <div class="col-12">
                     <input 
                         type="text" 
                         name="url" 
                         placeholder="https://www.example.com"
+                        value="{{ request.form.get('url', '') }}"
                         class="form-control form-control-lg"
                         required
                     >
