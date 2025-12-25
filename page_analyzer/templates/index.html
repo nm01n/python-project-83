@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Page Analyzer{% endblock %}
+
+{% block content %}
+<div class="container-lg mt-3">
+    <h1>Анализатор страниц</h1>
+    
+    <div class="row">
+        <div class="col-12 col-md-10 col-lg-8 mx-auto border rounded-3 bg-light p-5">
+            <h2 class="mb-3">Бесплатно проверьте SEO-пригодность вашего сайта</h2>
+            
+            <form method="post" action="/" class="row g-3" required>
+                <div class="col-12">
+                    <input 
+                        type="text" 
+                        name="url" 
+                        placeholder="https://www.example.com"
+                        class="form-control form-control-lg"
+                        required
+                    >
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary btn-lg w-100">Проверить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
