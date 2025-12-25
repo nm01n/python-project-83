@@ -7,11 +7,21 @@ from psycopg2.extras import RealDictCursor
 from urllib.parse import urlparse
 import validators
 
-load_dotenv()
+# Загружаем .env только если файл существует (для локальной разработки)
+if os.path.exists('.env'):
+    load_dotenv()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+
+# Проверка что SECRET_KEY установлен
+if not app.config['SECRET_KEY']:
+    raise ValueError("SECRET_KEY не установлен! Установите переменную окружения SECRET_KEY")
+
 DATABASE_URL = os.getenv('DATABASE_URL')
+
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL не установлен! Установите переменную окружения DATABASE_URL")
 
 
 def get_db_connection():
