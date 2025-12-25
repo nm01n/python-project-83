@@ -6,6 +6,8 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from urllib.parse import urlparse
 import validators
+import requests
+from bs4 import BeautifulSoup
 
 # Загружаем .env только если файл существует (для локальной разработки)
 if os.path.exists('.env'):
@@ -16,18 +18,60 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
 # Проверка что SECRET_KEY установлен
 if not app.config['SECRET_KEY']:
-    raise ValueError("SECRET_KEY не установлен! Установите переменную окружения SECRET_KEY")
+    raise ValueError(
+        "SECRET_KEY не установлен! "
+        "Установите переменную окружения SECRET_KEY"
+    )
 
 DATABASE_URL = os.getenv('DATABASE_URL')
 
 if not DATABASE_URL:
-    raise ValueError("DATABASE_URL не установлен! Установите переменную окружения DATABASE_URL")
+    raise ValueError(
+        "DATABASE_URL не установлен! "
+        "Установите переменную окружения DATABASE_URL"
+    )
 
 
 def get_db_connection():
     """Создает подключение к базе данных"""
     conn = psycopg2.connect(DATABASE_URL)
     return conn
+
+
+def check_url(url):
+    """
+    Выполняет HTTP-запрос к URL и извлекает информацию
+    Возвращает словарь с данными или None при ошибке
+    """
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        
+        # Парсим HTML
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        # Извлекаем h1
+        h1_tag = soup.find('h1')
+        h1 = h1_tag.get_text().strip() if h1_tag else ''
+        
+        # Извлекаем title
+        title_tag = soup.find('title')
+        title = title_tag.get_text().strip() if title_tag else ''
+        
+        # Извлекаем description из meta-тега
+        description_tag = soup.find('meta', attrs={'name': 'description'})
+        description = ''
+        if description_tag and description_tag.get('content'):
+            description = description_tag.get('content').strip()
+        
+        return {
+            'status_code': response.status_code,
+            'h1': h1[:255] if h1 else None,
+            'title': title[:255] if title else None,
+            'description': description if description else None,
+        }
+    except requests.exceptions.RequestException:
+        return None
 
 
 @app.route('/')
@@ -89,16 +133,17 @@ def urls():
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     
-    # Получаем все URLs с датой последней проверки
+    # Получаем все URLs с информацией о последней проверке
     cur.execute('''
         SELECT 
             urls.id,
             urls.name,
             urls.created_at,
+            url_checks.status_code as last_status_code,
             MAX(url_checks.created_at) as last_check
         FROM urls
         LEFT JOIN url_checks ON urls.id = url_checks.url_id
-        GROUP BY urls.id, urls.name, urls.created_at
+        GROUP BY urls.id, urls.name, urls.created_at, url_checks.status_code
         ORDER BY urls.created_at DESC
     ''')
     urls_list = cur.fetchall()
@@ -125,7 +170,9 @@ def show_url(id):
     
     # Получаем все проверки для этого URL
     cur.execute(
-        'SELECT * FROM url_checks WHERE url_id = %s ORDER BY created_at DESC',
+        '''SELECT * FROM url_checks 
+           WHERE url_id = %s 
+           ORDER BY created_at DESC''',
         (id,)
     )
     checks = cur.fetchall()
@@ -151,13 +198,29 @@ def add_check(id):
         flash('URL не найден', 'danger')
         return redirect(url_for('index'))
     
-    # Создаем новую проверку (пока только с базовыми полями)
+    # Выполняем проверку сайта
+    check_data = check_url(url['name'])
+    
+    if check_data is None:
+        cur.close()
+        conn.close()
+        flash('Произошла ошибка при проверке', 'danger')
+        return redirect(url_for('show_url', id=id))
+    
+    # Создаем новую проверку с полученными данными
     created_at = datetime.now()
     cur.execute(
         '''INSERT INTO url_checks 
-           (url_id, created_at) 
-           VALUES (%s, %s)''',
-        (id, created_at)
+           (url_id, status_code, h1, title, description, created_at) 
+           VALUES (%s, %s, %s, %s, %s, %s)''',
+        (
+            id,
+            check_data['status_code'],
+            check_data['h1'],
+            check_data['title'],
+            check_data['description'],
+            created_at
+        )
     )
     conn.commit()
     cur.close()

@@ -13,7 +13,7 @@
                     <th scope="col">ID</th>
                     <th scope="col">Имя</th>
                     <th scope="col">Последняя проверка</th>
-                    <th scope="col">Дата создания</th>
+                    <th scope="col">Код ответа</th>
                 </tr>
             </thead>
             <tbody>
@@ -28,7 +28,11 @@
                             {{ url.last_check.strftime('%Y-%m-%d') }}
                         {% endif %}
                     </td>
-                    <td>{{ url.created_at.strftime('%Y-%m-%d') }}</td>
+                    <td>
+                        {% if url.last_status_code %}
+                            {{ url.last_status_code }}
+                        {% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
