@@ -3,7 +3,7 @@ name = "hexlet-code"
 version = "0.1.0"
 description = "Page Analyzer"
 authors = [
-    { name = "Olga", email = "famtaki@proton.me" }
+    { name = "Your Name", email = "your.email@example.com" }
 ]
 dependencies = [
     "flask>=3.0.0",
@@ -25,5 +25,31 @@ packages = ["page_analyzer"]
 
 [dependency-groups]
 dev = [
-    "flake8>=7.0.0",
+    "ruff>=0.8.0",
 ]
+
+[tool.ruff]
+line-length = 120
+exclude = [
+    ".git",
+    "__pycache__",
+    ".venv",
+    "venv",
+    ".eggs",
+    "*.egg",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "C90", "I", "N", "UP", "B", "A", "C4", "DTZ", "T10", "DJ", "EM", "ISC", "ICN", "G", "PIE", "T20", "PT", "Q", "RSE", "RET", "SLF", "SIM", "TID", "TCH", "ARG", "PTH", "ERA", "PD", "PL", "TRY", "NPY", "RUF"]
+ignore = [
+    "RUF002",  # Ambiguous unicode characters in docstrings
+    "RUF003",  # Ambiguous unicode characters in comments
+    "TRY003",  # Long messages outside exception class
+    "EM101",   # Exception string literals
+    "A002",    # Builtin shadowing (id parameter)
+    "PTH110",  # os.path.exists vs Path.exists
+    "PLR2004", # Magic values
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
