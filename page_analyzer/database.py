@@ -6,12 +6,14 @@ from datetime import datetime, timezone
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
-DATABASE_URL = os.getenv("DATABASE_URL")
-
 
 def get_connection():
     """Создает подключение к базе данных."""
-    return psycopg2.connect(DATABASE_URL)
+    database_url = os.getenv("DATABASE_URL")
+    if not database_url:
+        msg = "DATABASE_URL не установлен!"
+        raise ValueError(msg)
+    return psycopg2.connect(database_url)
 
 
 def add_url(name):
@@ -36,7 +38,10 @@ def add_url(name):
         return None
 
     created_at = datetime.now(tz=timezone.utc)
-    cur.execute("INSERT INTO urls (name, created_at) VALUES (%s, %s) RETURNING id", (name, created_at))
+    cur.execute(
+        "INSERT INTO urls (name, created_at) VALUES (%s, %s) RETURNING id",
+        (name, created_at),
+    )
     url_id = cur.fetchone()["id"]
     conn.commit()
     cur.close()
@@ -68,11 +73,12 @@ def get_url_by_id(url_id):
 
 
 def get_all_urls():
-    """Получает все URLs с информацией о последней проверке."""
+    """Получает все URLs c информацией о последней проверке."""
     conn = get_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
-    cur.execute("""
+    cur.execute(
+        """
         SELECT
             urls.id,
             urls.name,
@@ -88,7 +94,8 @@ def get_all_urls():
             LIMIT 1
         ) latest_checks ON true
         ORDER BY urls.created_at DESC
-    """)
+    """
+    )
 
     urls = cur.fetchall()
     cur.close()
@@ -102,7 +109,7 @@ def add_check(url_id, check_data):
 
     Args:
         url_id: ID URL
-        check_data: Словарь с данными проверки
+        check_data: Словарь c данными проверки
     """
     conn = get_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
