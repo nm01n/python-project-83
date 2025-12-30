@@ -1,14 +1,15 @@
 """Главный модуль Flask приложения."""
 
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 from flask import Flask, flash, redirect, render_template, request, url_for
 
 from page_analyzer import database, parser, url_normalizer
 
-# Загружаем .env только если файл существует (для локальной разработки)
-if os.path.exists(".env"):
+# Загружаем .env только если файл существует
+if Path(".env").exists():
     load_dotenv()
 
 app = Flask(__name__)
@@ -16,12 +17,20 @@ app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 
 # Проверка что SECRET_KEY установлен
 if not app.config["SECRET_KEY"]:
-    raise ValueError("SECRET_KEY не установлен! Установите переменную окружения SECRET_KEY")
+    msg = (
+        "SECRET_KEY не установлен! "
+        "Установите переменную окружения SECRET_KEY"
+    )
+    raise ValueError(msg)
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
-    raise ValueError("DATABASE_URL не установлен! Установите переменную окружения DATABASE_URL")
+    msg = (
+        "DATABASE_URL не установлен! "
+        "Установите переменную окружения DATABASE_URL"
+    )
+    raise ValueError(msg)
 
 
 @app.route("/")
@@ -48,13 +57,13 @@ def add_url():
     existing_url = database.get_url_by_name(normalized_url)
     if existing_url:
         flash("Страница уже существует", "info")
-        return redirect(url_for("show_url", id=existing_url["id"]))
+        return redirect(url_for("show_url", url_id=existing_url["id"]))
 
     # Добавляем новый URL
     url_id = database.add_url(normalized_url)
 
     flash("Страница успешно добавлена", "success")
-    return redirect(url_for("show_url", id=url_id))
+    return redirect(url_for("show_url", url_id=url_id))
 
 
 @app.route("/urls")
@@ -64,24 +73,24 @@ def urls():
     return render_template("urls.html", urls=urls_list)
 
 
-@app.route("/urls/<int:id>")
-def show_url(id):
+@app.route("/urls/<int:url_id>")
+def show_url(url_id):
     """Отображает страницу конкретного URL."""
-    url = database.get_url_by_id(id)
+    url = database.get_url_by_id(url_id)
 
     if url is None:
         flash("URL не найден", "danger")
         return redirect(url_for("index"))
 
-    checks = database.get_checks_by_url_id(id)
+    checks = database.get_checks_by_url_id(url_id)
 
     return render_template("url.html", url=url, checks=checks)
 
 
-@app.route("/urls/<int:id>/checks", methods=["POST"])
-def add_check(id):
+@app.route("/urls/<int:url_id>/checks", methods=["POST"])
+def add_check(url_id):
     """Запускает проверку URL."""
-    url = database.get_url_by_id(id)
+    url = database.get_url_by_id(url_id)
 
     if url is None:
         flash("URL не найден", "danger")
@@ -92,10 +101,10 @@ def add_check(id):
 
     if check_data is None:
         flash("Произошла ошибка при проверке", "danger")
-        return redirect(url_for("show_url", id=id))
+        return redirect(url_for("show_url", url_id=url_id))
 
     # Сохраняем результаты проверки
-    database.add_check(id, check_data)
+    database.add_check(url_id, check_data)
 
     flash("Страница успешно проверена", "success")
-    return redirect(url_for("show_url", id=id))
+    return redirect(url_for("show_url", url_id=url_id))
