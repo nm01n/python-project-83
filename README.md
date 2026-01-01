@@ -1,7 +1,7 @@
 # Page Analyzer
 
 [![Actions Status](https://github.com/nm01n/python-project-83/workflows/Python%20CI/badge.svg)](https://github.com/nm01n/python-project-83/actions)
-[![Maintainability](https://api.codeclimate.com/v1/badges/YOUR_TOKEN/maintainability)](https://codeclimate.com/github/nm01n/python-project-83/maintainability)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=nm01n_python-project-83&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=nm01n_python-project-83)
 
 ## Описание
 
